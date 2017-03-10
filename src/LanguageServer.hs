@@ -1,6 +1,0 @@
-module LanguageServer
-    ( someFunc
-    ) where
-
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
