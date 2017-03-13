@@ -6,14 +6,20 @@
 module Protocols.LanguageServer.V3.Methods where
 
 import Control.Monad.IO.Class
+import Data.Aeson (FromJSON)
 import Network.JsonRpc.Server
 
 import Protocols.LanguageServer.V3.Data
 
-methods :: (Monad m, MonadIO m) => [Method m]
-methods = [initialize]
+data LanguageServerAPI m a = LanguageServerAPI {
+  _initialize :: InitializeParams a -> RpcResult m InitializeResult
+}
 
-initialize :: (MonadIO m, Monad m) => Method m
-initialize = toMethod "initialize" f (Required "InitializeParams" :+: ()) where
-  f :: forall m. (MonadIO m, Monad m) => InitializeParams -> RpcResult m ()
-  f i = liftIO $ print i
+-- | Default (empty) `LanguageServerAPI`
+languageServerAPI :: Monad m => LanguageServerAPI m ()
+languageServerAPI = LanguageServerAPI init where
+  init _ = return initializeResult
+
+generateMethods :: (Monad m, FromJSON a) => LanguageServerAPI m a -> [Method m]
+generateMethods api = [initialize] where
+  initialize = toMethod "initialize" (_initialize api) (Required "InitializeParams" :+: ())
